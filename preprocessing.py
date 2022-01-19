@@ -4,6 +4,7 @@
 import nltk
 import re
 import string
+# from string import maketrans
 from nltk.corpus import stopwords
 from nltk import word_tokenize
 from nltk.stem import SnowballStemmer
@@ -110,7 +111,7 @@ def GetEmoticons(tweet):
 def GetHashTags(tweet):
 	hashtags = []
 	for token in tweet:
-		if token[0]=='#':
+		if len(token) and token[0]=='#':
 			hashtags.append(token.lower())
 
 	return hashtags
@@ -138,7 +139,7 @@ def GetIntensifiers(tweet):
 def GetUserNames(tweet):
 	user_names = []
 	for token in tweet:
-		if token[0]=='@':
+		if len(token) and token[0]=='@':
 			user_names.append(token)
 	return user_names
 
@@ -152,13 +153,13 @@ def GetURLs(tweet):
 
 # Remove punctuation marks from a preprocessed tweet.
 def RemovePunctuations(processed_tweet):
-	processed_tweet = processed_tweet.translate(None, punctuations_marks)
+	processed_tweet = processed_tweet.translate(str.maketrans("", "", punctuations_marks))
 	return processed_tweet
 
 # Find the score using the emotion lexicon
 def FindLexiconScore(tokenised_tweet, id_to_word_map, id_to_score_map):
 	score_vector = [0]*len(id_to_word_map)
-	for key, word in id_to_word_map.iteritems():
+	for key, word in id_to_word_map.items():
 		if word in tokenised_tweet:
 			score_vector[key] = id_to_score_map[key]
 
@@ -181,8 +182,9 @@ usernames with 'USER', URLs with "URL" and HashTags with "HASHTAG", emoticons
 with "EMOTICONS." We are not converting the tweet to lowercase.
 '''
 def ProcessTweet(tweet):
-	processed_tweet = tweet
-	for i in xrange(len(processed_tweet)):
+	processed_tweet = list(filter(lambda x: len(x)>0 , tweet))
+
+	for i in range(len(processed_tweet)):
 		if processed_tweet[i][0] == '@':
 			processed_tweet[i] = 'USER'
 		elif processed_tweet[i][0] == '#':
@@ -206,7 +208,7 @@ def ProcessTweet(tweet):
 # Split the tweet into tokens.
 def TokeniseTweet(tweet):
 	tokenised_tweet = tweet.split(' ')
-	tokenised_tweet = filter(None, tokenised_tweet)
+	# tokenised_tweet = filter(None, tokenised_tweet)
 	return tokenised_tweet
 
 # Generate the Skip Grams for the tweet. Input argument is the tokenised
@@ -222,8 +224,8 @@ def WordNGrams(tweet, n):
 '''
 def WordNGrams(tweet, n):
 	word_n_grams_list = []
-	for i in xrange(1, n + 1):
-		word_i_grams = [" ".join(tweet[j:j+i]) for j in xrange(len(tweet) - (i-1))]
+	for i in range(1, n + 1):
+		word_i_grams = [" ".join(tweet[j:j+i]) for j in range(len(tweet) - (i-1))]
 		word_n_grams_list.extend(word_i_grams)
 	return word_n_grams_list
 
@@ -240,8 +242,8 @@ def CharNGrams(tweet, n):
 '''
 def CharNGrams(tweet, n):
 	char_n_grams_list = []
-	for i in xrange(1, n + 1):
-		char_i_grams = [tweet[j:j+i] for j in xrange(len(tweet)- (i-1))]
+	for i in range(1, n + 1):
+		char_i_grams = [tweet[j:j+i] for j in range(len(tweet)- (i-1))]
 		char_n_grams_list.extend(char_i_grams)
 	return char_n_grams_list
 
@@ -262,7 +264,7 @@ def CheckRepetitions(tweet):
 	repetitive_words = []
 	processed_tweet = tweet
 	#print processed_tweet
-	for i in xrange(len(processed_tweet)):
+	for i in range(len(processed_tweet)):
 		word = processed_tweet[i]
 		#print word
 		#print ReplaceTwoOrMore(word)
@@ -304,10 +306,10 @@ def PreProcessing(tweet):
 	urls = GetURLs(tweet)
 	upper_case_words = FindUpperCaseWords(tweet)
 	processed_tweet = ProcessTweet(tokenised_tweet)
-	
+
 	delimiter = ' '
 	processed_tweet = delimiter.join(processed_tweet)
-	
+
 	punctuations_marks_count = GetPunctuationMarks(processed_tweet)
 	processed_tweet = RemovePunctuations(processed_tweet)
 	processed_tweet_tokenised = TokeniseTweet(processed_tweet)

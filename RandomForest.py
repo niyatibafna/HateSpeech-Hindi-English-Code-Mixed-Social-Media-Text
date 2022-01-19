@@ -1,10 +1,10 @@
 from __future__ import division
 import os
-import numpy 
+import numpy
 import pickle
 from sklearn import svm
 from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier 
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split  # Random split into training and test dataset.
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
@@ -52,6 +52,6 @@ for train_idx, test_idx in kf.split(X):
 		predictions = clf.predict(X_test)
 		score = accuracy_score(Y_test, predictions)
 		accuracy = accuracy + score
-		print("Score for fold %d: %.3f" %(fold, score))
+		print(("Score for fold %d: %.3f" %(fold, score)))
 
-print "Accuracy : " , round(accuracy/10, 3)
+print( "Accuracy : " , round(accuracy/10, 3))

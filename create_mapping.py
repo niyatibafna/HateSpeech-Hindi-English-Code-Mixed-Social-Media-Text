@@ -6,14 +6,14 @@ tweet_to_id_map = {}
 id_to_class_map = {}
 
 
-with open('dataset.tsv') as dataset:
+with open('../data/hate_speech.tsv') as dataset:
 	for line in csv.reader(dataset, delimiter="\t"):
-		
+
 		class_name = []
 		text = line[0]
 		if len(line[1]) > 0:
 			class_name.append(line[1])
-		
+
 		id_to_tweet_map[text_id] = text
 		tweet_to_id_map[text] = text_id
 		id_to_class_map[text_id] = class_name

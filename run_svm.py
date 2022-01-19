@@ -1,6 +1,6 @@
 from __future__ import division
 import os
-import numpy 
+import numpy
 import pickle
 from sklearn import svm
 from sklearn.model_selection import train_test_split  # Random split into training and test dataset.
@@ -17,6 +17,7 @@ from sklearn.feature_selection import chi2
 from sklearn.feature_selection import RFE
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import LabelEncoder, MultiLabelBinarizer
+
 from build_feature_vector import *
 from format_data import *
 
@@ -51,11 +52,10 @@ for train_idx, test_idx in kf.split(X):
 		#print(X_train.shape)
 		#print(Y_train.shape)
 		clf = svm.SVC(kernel = 'rbf', C=10)
-		clf.fit(X_train, Y_train)
+		clf.fit(X_train, Y_train.ravel())
 		predictions = clf.predict(X_test)
 		score = accuracy_score(Y_test, predictions)
 		accuracy = accuracy + score
 		print("Score for fold %d: %.3f" %(fold, score))
 
-print "Accuracy : " , round(accuracy/10, 3)
-
+print( "Accuracy : " , round(accuracy/10, 3))

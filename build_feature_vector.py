@@ -10,7 +10,20 @@ import pickle
 import preprocessing as pre
 import re
 import string
-global char_n_grams_index, word_n_grams_index, hate_words_index
+import json
+from tqdm import tqdm
+from features_count import *
+global char_n_grams_index, word_n_grams_index, hate_words_index, feature_vector_file
+
+feature_vector_file = "fv_all.json"
+
+
+import os
+
+if not os.path.exists("pickle_data.txt"):
+	print("Picking indexes")
+	CreatePickleFile()
+
 
 def AddEmoticonFeatures(feature_vector, happy_emoticon, sad_emoticon,
 						disgust_emoticon, anger_emoticon, fear_emoticon,
@@ -27,7 +40,7 @@ def AddEmoticonFeatures(feature_vector, happy_emoticon, sad_emoticon,
 		'''
 		elif emoticon in disgust_emoticon:
 			count_disgust = count_disgust + 1
-		
+
 		elif emoticon in fear_emoticon:
 			count_fear = count_fear + 1
 		elif emoticon in surprise_emoticon:
@@ -124,20 +137,20 @@ def BuildFeatureVectorForTweet(tweet):
 	global char_n_grams_index, word_n_grams_index, hate_words_index
 	happy, sad, anger, fear, surprise, disgust, hashtags, usernames, \
 	urls, punctuations_marks_count, repetitive_words, char_n_grams, \
-	word_n_grams, upper_case_words, intensifiers, negations, tweet_hate_words = pre.PreProcessing(tweet)	
+	word_n_grams, upper_case_words, intensifiers, negations, tweet_hate_words = pre.PreProcessing(tweet)
 	#print tweet_hate_words
 	feature_vector = []
 	#print char_n_grams_index
 	#print word_n_grams_index
-	#feature_vector = AddEmoticonFeatures(feature_vector, happy, sad, disgust, anger, fear, surprise)
+	feature_vector = AddEmoticonFeatures(feature_vector, happy, sad, disgust, anger, fear, surprise)
 	feature_vector = AddCharNGramFeatures(feature_vector, char_n_grams_index, char_n_grams)
-	#feature_vector = AddWordNGramFeatures(feature_vector, word_n_grams_index, word_n_grams)
-	#feature_vector = AddRepetitiveWordsFeature(feature_vector, repetitive_words)
-	#feature_vector = AddPunctuationMarksFeature(feature_vector, punctuations_marks_count)
-	#feature_vector = AddHateWordsFeature(feature_vector, hate_words_index, tweet_hate_words)
-	#feature_vector = AddUpperCaseWordsFeature(feature_vector, upper_case_words)
-	#feature_vector = AddIntensifersFeature(feature_vector, intensifiers)
-	#feature_vector = AddNegationsFeature(feature_vector, negations)
+	feature_vector = AddWordNGramFeatures(feature_vector, word_n_grams_index, word_n_grams)
+	feature_vector = AddRepetitiveWordsFeature(feature_vector, repetitive_words)
+	feature_vector = AddPunctuationMarksFeature(feature_vector, punctuations_marks_count)
+	feature_vector = AddHateWordsFeature(feature_vector, hate_words_index, tweet_hate_words)
+	feature_vector = AddUpperCaseWordsFeature(feature_vector, upper_case_words)
+	feature_vector = AddIntensifersFeature(feature_vector, intensifiers)
+	feature_vector = AddNegationsFeature(feature_vector, negations)
 	return feature_vector
 
 
@@ -151,7 +164,7 @@ def GetFeatureVector(tweet):
 	# will start from beginning
 	file.seek(0)
 
-	for i in xrange(pickle.load(file)):
+	for i in range(pickle.load(file)):
 		data.append(pickle.load(file))
 
 	char_n_grams_index, word_n_grams_index, hate_words_index = data
@@ -164,19 +177,35 @@ def GetFeatureVector(tweet):
 
 def FeatureVectorDictionary(tweet_mapping):
 	feature_vector_dict = {}
-	for key, tweet in tweet_mapping.iteritems():
+	for key, tweet in tqdm(list(tweet_mapping.items())):
 		feature_vector_dict[key] = GetFeatureVector(tweet)
 	return feature_vector_dict
+
+
+def LoadFeatureVectorDictionary(filename = "feature_vector_dictionary.json"):
+	with open("feature_vector_dicts/"+filename, "r") as dict_file:
+		return {int(k): val for k, val in json.load(dict_file).items()}
+
+def SaveFeatureVectorDictionary(feature_vector_dictionary, filename = "feature_vector_dictionary.json"):
+	with open("feature_vector_dicts/"+filename, "w") as dict_file:
+		json.dump(feature_vector_dictionary, dict_file)
 
 
 def TrainingData(id_tweet_map, id_class_map):
 	tweet_feature_vector = []
 	tweet_class = []
 	#print "TrainingData Called"
-	#print "FeatureVectorDictionary Called"
-	feature_vector_dict = FeatureVectorDictionary(id_tweet_map)
+	if not os.path.exists(feature_vector_file):
+
+		print("Building FeatureVectorDictionary")
+		feature_vector_dict = FeatureVectorDictionary(id_tweet_map)
+		SaveFeatureVectorDictionary(feature_vector_dict, feature_vector_file)
+
+	else:
+		feature_vector_dict = LoadFeatureVectorDictionary(feature_vector_file)
 	#print "Done"
-	for key, val in feature_vector_dict.iteritems():
+	for key, val in tqdm(list(feature_vector_dict.items())):
+		# print(key, val)
 		tweet_feature_vector.append(feature_vector_dict[key])
 		tweet_class.append(id_class_map[key])
 

@@ -16,7 +16,7 @@ hate_words_index = {}
 
 def GetAllCharNGrams(tweet_mapping):
 	char_n_grams = []
-	for key, tweet in tweet_mapping.iteritems():
+	for key, tweet in tweet_mapping.items():
 		char_grams = CharNGrams(tweet, n_char_gram)
 		char_n_grams.extend(char_grams)
 
@@ -26,7 +26,7 @@ def GetAllCharNGrams(tweet_mapping):
 
 def GetAllWordNGrams(tweet_mapping):
 	word_n_grams = []
-	for key, tweet in tweet_mapping.iteritems():
+	for key, tweet in tweet_mapping.items():
 		tokenised_tweet = TokeniseTweet(tweet)
 		#print tokenised_tweet
 		word_grams = WordNGrams(tokenised_tweet, n_word_gram)
@@ -57,7 +57,7 @@ def HateWordsIndex(hate_words):
 
 def ProcessTweetforWordNGrams(tweet_mapping):
 	processed_tweet_mapping = {}
-	for key, tweet in tweet_mapping.iteritems():
+	for key, tweet in tweet_mapping.items():
 		tokenised_tweet = TokeniseTweet(tweet)
 		processed_tweet = ProcessTweet(tokenised_tweet)
 		delimiter = ' '
@@ -110,7 +110,9 @@ def CreatePickleFile():
 	pickle.dump(word_n_grams_index, pickle_data_file)
 	pickle.dump(hate_words_index, pickle_data_file)
 	pickle_data_file.close()
-CreatePickleFile()
+
+	print("char_n_grams_index, word_n_grams_index, hate_words_index pickled!")
+# CreatePickleFile()
 
 #print len(hate_words_index)
 #print hate_words_index['virodh']
