@@ -29,33 +29,44 @@ X, Y = TrainingData(id_tweet_map, id_class_map)
 
 # Convert list into a array
 X = numpy.asarray(X)
+print(X.shape)
 Y = numpy.asarray(Y)
 #print Y
 #Y = MultiLabelBinarizer().fit_transform(Y)
 #Y = LabelEncoder().fit_transform(Y)
 #print Y.shape
 
-X = SelectKBest(chi2, k=1200).fit_transform(X,Y)
+selectkbest_obj = SelectKBest(chi2, k=1200).fit(X,Y)
+X = selectkbest_obj.transform(X)
+
+with open("models/selectkbest_cgrams.pkl", "wb") as skbf:
+	pickle.dump(selectkbest_obj, skbf)
+
 #print X
 
 
-kf = KFold(n_splits=10)
-fold = 0
-
-accuracy = 0
-for train_idx, test_idx in kf.split(X):
-		fold = fold + 1
-		X_train, X_test = X[train_idx], X[test_idx]
-		Y_train, Y_test = Y[train_idx], Y[test_idx]
-		#print X_train
-		#print Y_train
-		#print(X_train.shape)
-		#print(Y_train.shape)
-		clf = svm.SVC(kernel = 'rbf', C=10)
-		clf.fit(X_train, Y_train.ravel())
-		predictions = clf.predict(X_test)
-		score = accuracy_score(Y_test, predictions)
-		accuracy = accuracy + score
-		print("Score for fold %d: %.3f" %(fold, score))
-
-print( "Accuracy : " , round(accuracy/10, 3))
+# kf = KFold(n_splits=10)
+# fold = 0
+#
+# accuracy = 0
+# for train_idx, test_idx in kf.split(X):
+# 		fold = fold + 1
+# 		X_train, X_test = X[train_idx], X[test_idx]
+# 		Y_train, Y_test = Y[train_idx], Y[test_idx]
+# 		#print X_train
+# 		#print Y_train
+# 		#print(X_train.shape)
+# 		#print(Y_train.shape)
+# 		clf = svm.SVC(kernel = 'rbf', C=10)
+# 		clf.fit(X_train, Y_train.ravel())
+# 		predictions = clf.predict(X_test)
+# 		score = accuracy_score(Y_test, predictions)
+# 		accuracy = accuracy + score
+# 		print("Score for fold %d: %.3f" %(fold, score))
+#
+# 		if fold == 1:
+# 			with open("models/svm_fv_cgrams.pkl", "wb") as m_file:
+# 				pickle.dump(clf, m_file)
+#
+#
+# print( "Accuracy : " , round(accuracy/10, 3))

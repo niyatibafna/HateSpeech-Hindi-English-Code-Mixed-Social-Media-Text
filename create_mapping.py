@@ -6,7 +6,7 @@ tweet_to_id_map = {}
 id_to_class_map = {}
 
 
-with open('../data/hate_speech.tsv') as dataset:
+with open('../political_health/data/train/hate_speech.tsv') as dataset:
 	for line in csv.reader(dataset, delimiter="\t"):
 
 		class_name = []

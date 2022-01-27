@@ -15,13 +15,13 @@ from tqdm import tqdm
 from features_count import *
 global char_n_grams_index, word_n_grams_index, hate_words_index, feature_vector_file
 
-feature_vector_file = "fv_all.json"
+feature_vector_file = "fv_cgrams.json"
 
 
 import os
 
 if not os.path.exists("pickle_data.txt"):
-	print("Picking indexes")
+	print("Pickling indexes")
 	CreatePickleFile()
 
 
@@ -131,7 +131,7 @@ def AddNegationsFeature(feature_vector, negations):
 	return feature_vector
 
 
-def BuildFeatureVectorForTweet(tweet):
+def BuildFeatureVectorForTweet(tweet, mode = "cgrams"):
 
 	#print "BuildFeatureVectorForTweet Called"
 	global char_n_grams_index, word_n_grams_index, hate_words_index
@@ -142,15 +142,17 @@ def BuildFeatureVectorForTweet(tweet):
 	feature_vector = []
 	#print char_n_grams_index
 	#print word_n_grams_index
-	feature_vector = AddEmoticonFeatures(feature_vector, happy, sad, disgust, anger, fear, surprise)
+	if mode == "all":
+		feature_vector = AddEmoticonFeatures(feature_vector, happy, sad, disgust, anger, fear, surprise)
 	feature_vector = AddCharNGramFeatures(feature_vector, char_n_grams_index, char_n_grams)
-	feature_vector = AddWordNGramFeatures(feature_vector, word_n_grams_index, word_n_grams)
-	feature_vector = AddRepetitiveWordsFeature(feature_vector, repetitive_words)
-	feature_vector = AddPunctuationMarksFeature(feature_vector, punctuations_marks_count)
-	feature_vector = AddHateWordsFeature(feature_vector, hate_words_index, tweet_hate_words)
-	feature_vector = AddUpperCaseWordsFeature(feature_vector, upper_case_words)
-	feature_vector = AddIntensifersFeature(feature_vector, intensifiers)
-	feature_vector = AddNegationsFeature(feature_vector, negations)
+	if mode == "all":
+		feature_vector = AddWordNGramFeatures(feature_vector, word_n_grams_index, word_n_grams)
+		feature_vector = AddRepetitiveWordsFeature(feature_vector, repetitive_words)
+		feature_vector = AddPunctuationMarksFeature(feature_vector, punctuations_marks_count)
+		feature_vector = AddHateWordsFeature(feature_vector, hate_words_index, tweet_hate_words)
+		feature_vector = AddUpperCaseWordsFeature(feature_vector, upper_case_words)
+		feature_vector = AddIntensifersFeature(feature_vector, intensifiers)
+		feature_vector = AddNegationsFeature(feature_vector, negations)
 	return feature_vector
 
 
@@ -182,20 +184,23 @@ def FeatureVectorDictionary(tweet_mapping):
 	return feature_vector_dict
 
 
-def LoadFeatureVectorDictionary(filename = "feature_vector_dictionary.json"):
+def LoadFeatureVectorDictionary(filename):
 	with open("feature_vector_dicts/"+filename, "r") as dict_file:
 		return {int(k): val for k, val in json.load(dict_file).items()}
 
-def SaveFeatureVectorDictionary(feature_vector_dictionary, filename = "feature_vector_dictionary.json"):
+def SaveFeatureVectorDictionary(feature_vector_dictionary, filename):
 	with open("feature_vector_dicts/"+filename, "w") as dict_file:
 		json.dump(feature_vector_dictionary, dict_file)
 
 
-def TrainingData(id_tweet_map, id_class_map):
+def TrainingData(id_tweet_map, id_class_map, req_feature_vector_file="fv_cgrams.json"):
+	global feature_vector_file
+	feature_vector_file = req_feature_vector_file
+
 	tweet_feature_vector = []
 	tweet_class = []
 	#print "TrainingData Called"
-	if not os.path.exists(feature_vector_file):
+	if not os.path.exists("feature_vector_dicts/"+feature_vector_file):
 
 		print("Building FeatureVectorDictionary")
 		feature_vector_dict = FeatureVectorDictionary(id_tweet_map)
@@ -210,3 +215,19 @@ def TrainingData(id_tweet_map, id_class_map):
 		tweet_class.append(id_class_map[key])
 
 	return tweet_feature_vector, tweet_class
+
+
+def TestData(id_tweet_map, req_feature_vector_file="fv_cgrams.json"):
+	global feature_vector_file
+	feature_vector_file = req_feature_vector_file
+
+	tweet_feature_vector = []
+
+	print("Building FeatureVectorDictionary")
+	feature_vector_dict = FeatureVectorDictionary(id_tweet_map)
+	#print "Done"
+	for key, val in tqdm(list(feature_vector_dict.items())):
+		# print(key, val)
+		tweet_feature_vector.append(feature_vector_dict[key])
+
+	return tweet_feature_vector
