@@ -19,30 +19,47 @@ from sklearn.feature_selection import chi2
 from sklearn.feature_selection import RFE
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import LabelEncoder, MultiLabelBinarizer
-
 from build_feature_vector import *
 import sys
 sys.path.append("../political_health/")
 from data_reader import *
 
+
+PATH_TO_CRAWLED_DATA = "../political_health/data/crawled"
+INDEX_PATH = "indexes/indexes_hasoc.pkl"
+MODEL_PATH = "models/svm_fv_cgrams.pkl"
+KBEST_PATH = "models/selectkbest_cgrams.pkl"
+
 print("Loading SelectKBest Object")
-with open("models/selectkbest_cgrams.pkl", "rb") as skbf:
+with open(KBEST_PATH, "rb") as skbf:
 	selectkbest_obj = pickle.load(skbf)
 
 
 print("Loading SVM Model")
-svm_fv_cgrams = pickle.load(open("models/svm_fv_cgrams.pkl", "rb"))
+svm_fv_cgrams = pickle.load(open(MODEL_PATH, "rb"))
 
 
-tweet_reader = TweetReader("../political_health/data/crawled")
-id_tweet_map = tweet_reader.reader([2011], ["eid"])
+# tweet_reader = TweetReader(PATH_TO_CRAWLED_DATA)
+# id_tweet_map = tweet_reader.reader([2010], ["musalman"])
+#
 
-id_tweet_map = {key:val for key,val in id_tweet_map.items()}
+id_tweet_map = create_id_tweet_map()
 
-X = TestData(id_tweet_map, req_feature_vector_file = "fv_hasoc_cgrams.json")
+# tweets_list = [id_tweet_map[key] for key in sorted(list(id_tweet_map.keys())) if key==221]
+
+# id_tweet_map = {key:val for key,val in id_tweet_map.items() if key==221}
+# print(id_tweet_map)
+
+id_tweet_map = {0:"Dikhta h Kon loser h Kal dekhna tumhaari bandagi and puneesh jaayenge jail then majja aayega ..Shilpa bhi khoon ke aasu royegi @eyehinakhan #hinakhan stay strong"}
+tweets_list = [id_tweet_map[key] for key in sorted(list(id_tweet_map.keys()))]
+
+
+X = TestData(id_tweet_map, index_fpath = INDEX_PATH, mode = ["cgrams"])
 # Convert list into a array
 X = numpy.asarray(X)
 X = selectkbest_obj.transform(X)
+
+print(X)
 
 print("Running SVM Model")
 predictions = svm_fv_cgrams.predict(X)
@@ -52,5 +69,5 @@ print(predictions)
 
 for idx, elem in enumerate(predictions):
     if elem == 1:
-        print(id_tweet_map[idx])
+        print(idx, tweets_list[idx])
         print("\n\n")

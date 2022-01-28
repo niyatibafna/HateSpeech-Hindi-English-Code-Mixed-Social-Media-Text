@@ -175,10 +175,10 @@ def GetIndexes(fpath):
 
 
 
-def FeatureVectorDictionary(tweet_mapping, mode = ["cgrams"]):
+def FeatureVectorDictionary(tweet_mapping, index_fpath, mode = ["cgrams"]):
 	global char_n_grams_index, word_n_grams_index, hate_words_index
 	print("Building FeatureVectorDictionary")
-	GetIndexes("indexes/indexes_hasoc.pkl")
+	GetIndexes(index_fpath)
 	feature_vector_dict = {}
 	for key, tweet in tqdm(list(tweet_mapping.items())):
 		feature_vector_dict[key] = BuildFeatureVectorForTweet(tweet, mode)
@@ -196,7 +196,7 @@ def SaveFeatureVectorDictionary(feature_vector_dictionary, filename):
 		json.dump(feature_vector_dictionary, dict_file)
 
 
-def TrainingData(id_tweet_map, id_class_map, mode = ["cgrams"], req_feature_vector_file="fv_cgrams.json"):
+def TrainingData(id_tweet_map, id_class_map, index_fpath = "indexes/indexes_hasoc.pkl", mode = ["cgrams"], req_feature_vector_file="fv_cgrams.json"):
 	global feature_vector_file
 	feature_vector_file = req_feature_vector_file
 
@@ -205,7 +205,7 @@ def TrainingData(id_tweet_map, id_class_map, mode = ["cgrams"], req_feature_vect
 	#print "TrainingData Called"
 	if not os.path.exists("feature_vector_dicts/"+feature_vector_file):
 
-		feature_vector_dict = FeatureVectorDictionary(id_tweet_map, mode)
+		feature_vector_dict = FeatureVectorDictionary(id_tweet_map, index_fpath, mode)
 		SaveFeatureVectorDictionary(feature_vector_dict, feature_vector_file)
 
 	else:
@@ -219,16 +219,13 @@ def TrainingData(id_tweet_map, id_class_map, mode = ["cgrams"], req_feature_vect
 	return tweet_feature_vector, tweet_class
 
 
-def TestData(id_tweet_map, req_feature_vector_file="fv_cgrams.json"):
-	global feature_vector_file
-	feature_vector_file = req_feature_vector_file
+def TestData(id_tweet_map, index_fpath = "indexes/indexes_hasoc.pkl", mode = ["cgrams"]):
 
 	tweet_feature_vector = []
 
-	feature_vector_dict = FeatureVectorDictionary(id_tweet_map)
+	feature_vector_dict = FeatureVectorDictionary(id_tweet_map, index_fpath, mode)
 
-	for key, val in tqdm(list(feature_vector_dict.items())):
-
+	for key in tqdm(sorted(list(feature_vector_dict.keys()))):
 		tweet_feature_vector.append(feature_vector_dict[key])
 
 	return tweet_feature_vector

@@ -24,38 +24,41 @@ import sys
 sys.path.append("../political_health/")
 from hasoc_reader import *
 
+PATH_TO_HASOC_DATA = "../political_health/data/hasoc"
+INDEX_PATH = "indexes/indexes_hasoc.pkl"
+FV_FILE = "fv_hasoc_cgrams.json"
+MODEL_PATH = "models/svm_fv_cgrams.pkl"
+KBEST_PATH = "models/selectkbest_cgrams.pkl"
 
+
+# Get data, HASOC data
 id_tweet_map = create_id_tweet_map()
 id_class_map = create_id_class_map()
 
 print("Length of training data: ", len(id_tweet_map))
 
-hasoc = HasocReader("../political_health/data/hasoc/hi_en_cm")
+hasoc = HasocReader(PATH_TO_HASOC_DATA)
 id_tweet_map, id_class_map = hasoc.reader(id_tweet_map, id_class_map)
 
-print("Length of training data: ", len(id_tweet_map))
+print("Length of all training data (including HASOC): ", len(id_tweet_map))
 assert len(id_tweet_map) == len(id_class_map)
 
-X, Y = TrainingData(id_tweet_map, id_class_map, mode = ["cgrams"], req_feature_vector_file = "fv_hasoc_cgrams.json")
+# Prepare feature vectors
+X, Y = TrainingData(id_tweet_map, id_class_map, index_fpath = INDEX_PATH, mode = ["cgrams"], req_feature_vector_file = FV_FILE)
 
 # Convert list into a array
 X = numpy.asarray(X)
-print(X.shape)
 Y = numpy.asarray(Y)
-#print Y
-#Y = MultiLabelBinarizer().fit_transform(Y)
-#Y = LabelEncoder().fit_transform(Y)
-#print Y.shape
 
+# Data transformation
 selectkbest_obj = SelectKBest(chi2, k=1200).fit(X,Y)
 X = selectkbest_obj.transform(X)
 
-with open("models/selectkbest_cgrams.pkl", "wb") as skbf:
+with open(KBEST_PATH, "wb") as skbf:
 	pickle.dump(selectkbest_obj, skbf)
 
-#print X
 
-
+# Training with KFold accuracy
 kf = KFold(n_splits=10)
 fold = 0
 
@@ -64,10 +67,6 @@ for train_idx, test_idx in kf.split(X):
 		fold = fold + 1
 		X_train, X_test = X[train_idx], X[test_idx]
 		Y_train, Y_test = Y[train_idx], Y[test_idx]
-		#print X_train
-		#print Y_train
-		#print(X_train.shape)
-		#print(Y_train.shape)
 		clf = svm.SVC(kernel = 'rbf', C=10)
 		clf.fit(X_train, Y_train.ravel())
 		predictions = clf.predict(X_test)
@@ -76,7 +75,7 @@ for train_idx, test_idx in kf.split(X):
 		print("Score for fold %d: %.3f" %(fold, score))
 
 		if fold == 1:
-			with open("models/svm_fv_cgrams.pkl", "wb") as m_file:
+			with open(MODEL_PATH, "wb") as m_file:
 				pickle.dump(clf, m_file)
 
 

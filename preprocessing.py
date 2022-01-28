@@ -322,9 +322,3 @@ def PreProcessing(tweet):
 	return happy, sad, anger, fear, surprise, disgust, hashtags, usernames, \
 		   urls, punctuations_marks_count, repetitive_words, char_n_grams, \
 		   word_n_grams, upper_case_words, intensifiers, negations, tweet_hate_words
-
-
-#tweet = "Heyyyyy I am verrryyy happppyyyy nafrat murder"
-#test = PreProcessing(tweet)
-#print test
-#print word
