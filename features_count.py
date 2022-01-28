@@ -6,6 +6,11 @@ import nltk
 from preprocessing import *
 from format_data import *
 
+import sys
+sys.path.append("../political_health/")
+from hasoc_reader import *
+
+
 global n_char_gram, n_word_gram
 n_char_gram = 3
 n_word_gram = 3
@@ -77,7 +82,7 @@ def HateWords(file):
 
 	return hate_words
 
-def CreatePickleFile():
+def CreatePickleFile(fpath):
 	file = open('hate_lexicon.txt', 'r')
 	hate_words = HateWords(file)
 	hate_words = set(hate_words)
@@ -87,11 +92,21 @@ def CreatePickleFile():
 	#print hate_words
 	HateWordsIndex(hate_words)
 	#print hate_words_index
-	id_to_tweet_map = create_id_tweet_map()
+	id_tweet_map = create_id_tweet_map()
+	id_class_map = create_id_class_map()
+	#
+	# print("Length of training data: ", len(id_tweet_map))
+
+	hasoc = HasocReader("../political_health/data/hasoc/hi_en_cm")
+	id_tweet_map, id_class_map = hasoc.reader(id_tweet_map, id_class_map)
+
+	# print("Length of training data: ", len(id_tweet_map))
+	# assert len(id_tweet_map) == len(id_class_map)
+
 	#print id_to_tweet_map
-	char_n_grams = GetAllCharNGrams(id_to_tweet_map)
+	char_n_grams = GetAllCharNGrams(id_tweet_map)
 	#print char_n_grams
-	processed_tweet_map = ProcessTweetforWordNGrams(id_to_tweet_map)
+	processed_tweet_map = ProcessTweetforWordNGrams(id_tweet_map)
 	#print processed_tweet_map
 	word_n_grams = GetAllWordNGrams(processed_tweet_map)
 
@@ -100,7 +115,7 @@ def CreatePickleFile():
 	#print char_n_grams_index
 	WordNGramsIndex(word_n_grams)
 	#print word_n_grams_index
-	pickle_data_file = open('pickle_data.txt', "wb")
+	pickle_data_file = open(fpath, "wb")
 
 	# Here 3 is the number which tells how many python objects are getting
 	# dumped into pickle file. This argument can be used to use do a range

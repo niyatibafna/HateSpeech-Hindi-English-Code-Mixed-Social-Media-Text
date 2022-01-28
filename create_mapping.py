@@ -5,6 +5,12 @@ id_to_tweet_map = {}
 tweet_to_id_map = {}
 id_to_class_map = {}
 
+def label_mapper(label):
+	if label == "yes":
+		return 1
+	return 0
+
+
 
 with open('../political_health/data/train/hate_speech.tsv') as dataset:
 	for line in csv.reader(dataset, delimiter="\t"):
@@ -16,7 +22,7 @@ with open('../political_health/data/train/hate_speech.tsv') as dataset:
 
 		id_to_tweet_map[text_id] = text
 		tweet_to_id_map[text] = text_id
-		id_to_class_map[text_id] = class_name
+		id_to_class_map[text_id] = label_mapper(class_name)
 
 		#if len(emotions) == 0:
 			#empty_emotions = empty_emotions + 1

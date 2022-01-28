@@ -39,7 +39,7 @@ id_tweet_map = tweet_reader.reader([2011], ["eid"])
 
 id_tweet_map = {key:val for key,val in id_tweet_map.items()}
 
-X = TestData(id_tweet_map)
+X = TestData(id_tweet_map, req_feature_vector_file = "fv_hasoc_cgrams.json")
 # Convert list into a array
 X = numpy.asarray(X)
 X = selectkbest_obj.transform(X)
@@ -51,6 +51,6 @@ print(predictions)
 
 
 for idx, elem in enumerate(predictions):
-    if elem == "yes":
+    if elem == 1:
         print(id_tweet_map[idx])
         print("\n\n")

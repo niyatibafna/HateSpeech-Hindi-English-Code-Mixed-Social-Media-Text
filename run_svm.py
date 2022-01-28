@@ -20,12 +20,23 @@ from sklearn.preprocessing import LabelEncoder, MultiLabelBinarizer
 
 from build_feature_vector import *
 from format_data import *
+import sys
+sys.path.append("../political_health/")
+from hasoc_reader import *
 
 
 id_tweet_map = create_id_tweet_map()
 id_class_map = create_id_class_map()
 
-X, Y = TrainingData(id_tweet_map, id_class_map)
+print("Length of training data: ", len(id_tweet_map))
+
+hasoc = HasocReader("../political_health/data/hasoc/hi_en_cm")
+id_tweet_map, id_class_map = hasoc.reader(id_tweet_map, id_class_map)
+
+print("Length of training data: ", len(id_tweet_map))
+assert len(id_tweet_map) == len(id_class_map)
+
+X, Y = TrainingData(id_tweet_map, id_class_map, mode = ["cgrams"], req_feature_vector_file = "fv_hasoc_cgrams.json")
 
 # Convert list into a array
 X = numpy.asarray(X)
@@ -45,28 +56,28 @@ with open("models/selectkbest_cgrams.pkl", "wb") as skbf:
 #print X
 
 
-# kf = KFold(n_splits=10)
-# fold = 0
-#
-# accuracy = 0
-# for train_idx, test_idx in kf.split(X):
-# 		fold = fold + 1
-# 		X_train, X_test = X[train_idx], X[test_idx]
-# 		Y_train, Y_test = Y[train_idx], Y[test_idx]
-# 		#print X_train
-# 		#print Y_train
-# 		#print(X_train.shape)
-# 		#print(Y_train.shape)
-# 		clf = svm.SVC(kernel = 'rbf', C=10)
-# 		clf.fit(X_train, Y_train.ravel())
-# 		predictions = clf.predict(X_test)
-# 		score = accuracy_score(Y_test, predictions)
-# 		accuracy = accuracy + score
-# 		print("Score for fold %d: %.3f" %(fold, score))
-#
-# 		if fold == 1:
-# 			with open("models/svm_fv_cgrams.pkl", "wb") as m_file:
-# 				pickle.dump(clf, m_file)
-#
-#
-# print( "Accuracy : " , round(accuracy/10, 3))
+kf = KFold(n_splits=10)
+fold = 0
+
+accuracy = 0
+for train_idx, test_idx in kf.split(X):
+		fold = fold + 1
+		X_train, X_test = X[train_idx], X[test_idx]
+		Y_train, Y_test = Y[train_idx], Y[test_idx]
+		#print X_train
+		#print Y_train
+		#print(X_train.shape)
+		#print(Y_train.shape)
+		clf = svm.SVC(kernel = 'rbf', C=10)
+		clf.fit(X_train, Y_train.ravel())
+		predictions = clf.predict(X_test)
+		score = accuracy_score(Y_test, predictions)
+		accuracy = accuracy + score
+		print("Score for fold %d: %.3f" %(fold, score))
+
+		if fold == 1:
+			with open("models/svm_fv_cgrams.pkl", "wb") as m_file:
+				pickle.dump(clf, m_file)
+
+
+print( "Accuracy : " , round(accuracy/10, 3))
