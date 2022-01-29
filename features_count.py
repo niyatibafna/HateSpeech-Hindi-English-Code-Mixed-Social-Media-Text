@@ -5,14 +5,15 @@ import pickle
 import nltk
 from preprocessing import *
 from format_data import *
+from tqdm import tqdm
 
 import sys
 sys.path.append("../political_health/")
 from hasoc_reader import *
-
+PATH_TO_HASOC_DATA = "../political_health/data/hasoc"
 
 global n_char_gram, n_word_gram
-n_char_gram = 3
+n_char_gram = 4
 n_word_gram = 3
 
 char_n_grams_index = {}
@@ -21,7 +22,8 @@ hate_words_index = {}
 
 def GetAllCharNGrams(tweet_mapping):
 	char_n_grams = []
-	for key, tweet in tweet_mapping.items():
+	print("Getting all char ngrams:")
+	for key, tweet in tqdm(list(tweet_mapping.items())):
 		char_grams = CharNGrams(tweet, n_char_gram)
 		char_n_grams.extend(char_grams)
 
@@ -30,8 +32,9 @@ def GetAllCharNGrams(tweet_mapping):
 	return char_n_grams
 
 def GetAllWordNGrams(tweet_mapping):
+	print("Getting all word ngrams:")
 	word_n_grams = []
-	for key, tweet in tweet_mapping.items():
+	for key, tweet in tqdm(list(tweet_mapping.items())):
 		tokenised_tweet = TokeniseTweet(tweet)
 		#print tokenised_tweet
 		word_grams = WordNGrams(tokenised_tweet, n_word_gram)
@@ -82,7 +85,7 @@ def HateWords(file):
 
 	return hate_words
 
-def CreatePickleFile(fpath):
+def CreatePickleFile(id_tweet_map, fpath):
 	file = open('hate_lexicon.txt', 'r')
 	hate_words = HateWords(file)
 	hate_words = set(hate_words)
@@ -92,15 +95,15 @@ def CreatePickleFile(fpath):
 	#print hate_words
 	HateWordsIndex(hate_words)
 	#print hate_words_index
-	id_tweet_map = create_id_tweet_map()
-	id_class_map = create_id_class_map()
+	# id_tweet_map = create_id_tweet_map()
+	# id_class_map = create_id_class_map()
 	#
 	# print("Length of training data: ", len(id_tweet_map))
 
-	hasoc = HasocReader("../political_health/data/hasoc/hi_en_cm")
-	id_tweet_map, id_class_map = hasoc.reader(id_tweet_map, id_class_map)
+	# hasoc = HasocReader(PATH_TO_HASOC_DATA)
+	# id_tweet_map, id_class_map = hasoc.reader(id_tweet_map, id_class_map)
 
-	# print("Length of training data: ", len(id_tweet_map))
+	print("Length of data to be indexed (including HASOC): ", len(id_tweet_map))
 	# assert len(id_tweet_map) == len(id_class_map)
 
 	#print id_to_tweet_map

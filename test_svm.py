@@ -26,9 +26,9 @@ from data_reader import *
 
 
 PATH_TO_CRAWLED_DATA = "../political_health/data/crawled"
-INDEX_PATH = "indexes/indexes_hasoc.pkl"
-MODEL_PATH = "models/svm_fv_cgrams.pkl"
-KBEST_PATH = "models/selectkbest_cgrams.pkl"
+INDEX_PATH = "indexes/indexes_cm_cgrams234.pkl"
+MODEL_PATH = "models/svm_cm_cgrams234.pkl"
+KBEST_PATH = "models/selectkbest_cm_cgrams234.pkl"
 
 print("Loading SelectKBest Object")
 with open(KBEST_PATH, "rb") as skbf:
@@ -43,14 +43,14 @@ svm_fv_cgrams = pickle.load(open(MODEL_PATH, "rb"))
 # id_tweet_map = tweet_reader.reader([2010], ["musalman"])
 #
 
-id_tweet_map = create_id_tweet_map()
+# id_tweet_map = create_id_tweet_map()
 
 # tweets_list = [id_tweet_map[key] for key in sorted(list(id_tweet_map.keys())) if key==221]
 
 # id_tweet_map = {key:val for key,val in id_tweet_map.items() if key==221}
 # print(id_tweet_map)
 
-id_tweet_map = {0:"Dikhta h Kon loser h Kal dekhna tumhaari bandagi and puneesh jaayenge jail then majja aayega ..Shilpa bhi khoon ke aasu royegi @eyehinakhan #hinakhan stay strong"}
+id_tweet_map = {0:"Kia ho ager teray rukhsaar ko hum choomtay hein; Jo musalmaan hein wo Quraan ko sanam choomtay hein! (Bahadur Shah Zafar)"}
 tweets_list = [id_tweet_map[key] for key in sorted(list(id_tweet_map.keys()))]
 
 

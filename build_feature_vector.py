@@ -141,11 +141,12 @@ def BuildFeatureVectorForTweet(tweet, mode = ["cgrams", "wgrams"]):
 		feature_vector = AddEmoticonFeatures(feature_vector, happy, sad, disgust, anger, fear, surprise)
 		feature_vector = AddRepetitiveWordsFeature(feature_vector, repetitive_words)
 		feature_vector = AddPunctuationMarksFeature(feature_vector, punctuations_marks_count)
-		feature_vector = AddHateWordsFeature(feature_vector, hate_words_index, tweet_hate_words)
 		feature_vector = AddUpperCaseWordsFeature(feature_vector, upper_case_words)
 		feature_vector = AddIntensifersFeature(feature_vector, intensifiers)
 		feature_vector = AddNegationsFeature(feature_vector, negations)
 
+	if "hatewords" in mode:
+		feature_vector = AddHateWordsFeature(feature_vector, hate_words_index, tweet_hate_words)
 	if "wgrams" in mode:
 		feature_vector = AddWordNGramFeatures(feature_vector, word_n_grams_index, word_n_grams)
 	if "cgrams" in mode:
@@ -154,11 +155,11 @@ def BuildFeatureVectorForTweet(tweet, mode = ["cgrams", "wgrams"]):
 	return feature_vector
 
 
-def GetIndexes(fpath):
+def GetIndexes(tweet_mapping, fpath):
 	global char_n_grams_index, word_n_grams_index, hate_words_index
 	if not os.path.exists(fpath):
 		print("Pickling indexes")
-		CreatePickleFile(fpath)
+		CreatePickleFile(tweet_mapping, fpath)
 
 	file = open(fpath, "rb")
 	data = []
@@ -178,7 +179,7 @@ def GetIndexes(fpath):
 def FeatureVectorDictionary(tweet_mapping, index_fpath, mode = ["cgrams"]):
 	global char_n_grams_index, word_n_grams_index, hate_words_index
 	print("Building FeatureVectorDictionary")
-	GetIndexes(index_fpath)
+	GetIndexes(tweet_mapping, index_fpath)
 	feature_vector_dict = {}
 	for key, tweet in tqdm(list(tweet_mapping.items())):
 		feature_vector_dict[key] = BuildFeatureVectorForTweet(tweet, mode)

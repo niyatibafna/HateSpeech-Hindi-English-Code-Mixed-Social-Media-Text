@@ -25,10 +25,10 @@ sys.path.append("../political_health/")
 from hasoc_reader import *
 
 PATH_TO_HASOC_DATA = "../political_health/data/hasoc"
-INDEX_PATH = "indexes/indexes_hasoc.pkl"
-FV_FILE = "fv_hasoc_cgrams.json"
-MODEL_PATH = "models/svm_fv_cgrams.pkl"
-KBEST_PATH = "models/selectkbest_cgrams.pkl"
+INDEX_PATH = "indexes/indexes_cm_cgrams234.pkl"
+FV_FILE = "fv_cm_cgrams234.json"
+MODEL_PATH = "models/svm_cm_cgrams234.pkl"
+KBEST_PATH = "models/selectkbest_cm_cgrams234.pkl"
 
 # Get data, HASOC data
 id_tweet_map = create_id_tweet_map()
@@ -57,10 +57,16 @@ with open(KBEST_PATH, "wb") as skbf:
 	pickle.dump(selectkbest_obj, skbf)
 
 
+clf = svm.SVC(kernel = 'rbf', C=10)
+clf.fit(X_train, Y_train.ravel())
+with open(MODEL_PATH, "wb") as m_file:
+	pickle.dump(clf, m_file)
+
+
 # Training with KFold accuracy
 kf = KFold(n_splits=10)
-fold = 0
 
+fold = 0
 accuracy = 0
 for train_idx, test_idx in kf.split(X):
 		fold = fold + 1
@@ -72,10 +78,6 @@ for train_idx, test_idx in kf.split(X):
 		score = accuracy_score(Y_test, predictions)
 		accuracy = accuracy + score
 		print("Score for fold %d: %.3f" %(fold, score))
-
-		if fold == 1:
-			with open(MODEL_PATH, "wb") as m_file:
-				pickle.dump(clf, m_file)
 
 
 print( "Accuracy : " , round(accuracy/10, 3))

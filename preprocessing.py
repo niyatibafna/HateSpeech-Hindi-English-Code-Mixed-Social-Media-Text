@@ -207,7 +207,7 @@ def ProcessTweet(tweet):
 
 # Split the tweet into tokens.
 def TokeniseTweet(tweet):
-	tokenised_tweet = tweet.split(' ')
+	tokenised_tweet = tweet.lower().split(' ')
 	# tokenised_tweet = filter(None, tokenised_tweet)
 	return tokenised_tweet
 
@@ -242,7 +242,7 @@ def CharNGrams(tweet, n):
 '''
 def CharNGrams(tweet, n):
 	char_n_grams_list = []
-	for i in range(1, n + 1):
+	for i in range(n - 2, n + 1):
 		char_i_grams = [tweet[j:j+i] for j in range(len(tweet)- (i-1))]
 		char_n_grams_list.extend(char_i_grams)
 	return char_n_grams_list
@@ -316,8 +316,10 @@ def PreProcessing(tweet):
 	processed_tweet = delimiter.join(processed_tweet_tokenised)
 
 	repetitive_words = CheckRepetitions(processed_tweet_tokenised)
-	char_n_grams = CharNGrams(processed_tweet,3)
+	char_n_grams = CharNGrams(processed_tweet, 4)
 	word_n_grams = WordNGrams(processed_tweet_tokenised, 3)
+
+	# print(char_n_grams, tweet_hate_words, processed_tweet)
 
 	return happy, sad, anger, fear, surprise, disgust, hashtags, usernames, \
 		   urls, punctuations_marks_count, repetitive_words, char_n_grams, \
