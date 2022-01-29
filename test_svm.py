@@ -59,7 +59,7 @@ X = TestData(id_tweet_map, index_fpath = INDEX_PATH, mode = ["cgrams"])
 X = numpy.asarray(X)
 X = selectkbest_obj.transform(X)
 
-print(X)
+# print(X)
 
 print("Running SVM Model")
 predictions = svm_fv_cgrams.predict(X)

@@ -30,7 +30,6 @@ FV_FILE = "fv_hasoc_cgrams.json"
 MODEL_PATH = "models/svm_fv_cgrams.pkl"
 KBEST_PATH = "models/selectkbest_cgrams.pkl"
 
-
 # Get data, HASOC data
 id_tweet_map = create_id_tweet_map()
 id_class_map = create_id_class_map()
