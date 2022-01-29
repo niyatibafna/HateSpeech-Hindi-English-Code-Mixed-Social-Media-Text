@@ -26,9 +26,10 @@ from hasoc_reader import *
 
 PATH_TO_HASOC_DATA = "../political_health/data/hasoc"
 INDEX_PATH = "indexes/indexes_cm_cgrams234.pkl"
-FV_FILE = "fv_cm_cgrams234.json"
-MODEL_PATH = "models/svm_cm_cgrams234.pkl"
-KBEST_PATH = "models/selectkbest_cm_cgrams234.pkl"
+FV_FILE = "fv_cm_wgrams_hwords.json"
+MODEL_PATH = "models/svm_cm_wgrams_hwords.pkl"
+KBEST_PATH = "models/selectkbest_cm_wgrams_hwords.pkl"
+MODE = ["wgrams", "hatewords"]
 
 # Get data, HASOC data
 id_tweet_map = create_id_tweet_map()
@@ -43,22 +44,28 @@ print("Length of all training data (including HASOC): ", len(id_tweet_map))
 assert len(id_tweet_map) == len(id_class_map)
 
 # Prepare feature vectors
-X, Y = TrainingData(id_tweet_map, id_class_map, index_fpath = INDEX_PATH, mode = ["cgrams"], req_feature_vector_file = FV_FILE)
+X, Y = TrainingData(id_tweet_map, id_class_map, index_fpath = INDEX_PATH, mode = MODE, req_feature_vector_file = FV_FILE)
 
 # Convert list into a array
+print("Features shape: ", len(X[0]))
 X = numpy.asarray(X)
 Y = numpy.asarray(Y)
 
 # Data transformation
+print("Selecting K best:")
 selectkbest_obj = SelectKBest(chi2, k=1200).fit(X,Y)
+# with open(KBEST_PATH, "rb") as skbf:
+# 	selectkbest_obj = pickle.load(skbf)
+
 X = selectkbest_obj.transform(X)
 
+print("Saving K best model")
 with open(KBEST_PATH, "wb") as skbf:
 	pickle.dump(selectkbest_obj, skbf)
 
-
+print("Running SVM")
 clf = svm.SVC(kernel = 'rbf', C=10)
-clf.fit(X_train, Y_train.ravel())
+clf.fit(X, Y.ravel())
 with open(MODEL_PATH, "wb") as m_file:
 	pickle.dump(clf, m_file)
 

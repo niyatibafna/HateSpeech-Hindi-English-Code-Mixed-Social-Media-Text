@@ -201,19 +201,28 @@ def TrainingData(id_tweet_map, id_class_map, index_fpath = "indexes/indexes_haso
 	global feature_vector_file
 	feature_vector_file = req_feature_vector_file
 
-	tweet_feature_vector = []
-	tweet_class = []
+
 	#print "TrainingData Called"
 	if not os.path.exists("feature_vector_dicts/"+feature_vector_file):
 
 		feature_vector_dict = FeatureVectorDictionary(id_tweet_map, index_fpath, mode)
-		SaveFeatureVectorDictionary(feature_vector_dict, feature_vector_file)
+		# SaveFeatureVectorDictionary(feature_vector_dict, feature_vector_file)
 
 	else:
 		feature_vector_dict = LoadFeatureVectorDictionary(feature_vector_file)
 	#print "Done"
+	tweet_feature_vector = []
+	tweet_class = []
 	for key, val in tqdm(list(feature_vector_dict.items())):
 		# print(key, val)
+		# X = np.expand_dims(np.asarray(feature_vector_dict[key]), axis=0)
+		# Y = np.expand_dims(np.asarray(id_class_map[key]), axis=0)
+		# if tweet_feature_vector is None:
+		# 	tweet_feature_vector = X
+		# 	tweet_class = Y
+		# else:
+		# 	tweet_feature_vector = np.append(tweet_feature_vector, X, axis=0)
+		# 	tweet_class = np.append(tweet_class, Y, axis=0)
 		tweet_feature_vector.append(feature_vector_dict[key])
 		tweet_class.append(id_class_map[key])
 
@@ -226,6 +235,13 @@ def TestData(id_tweet_map, index_fpath = "indexes/indexes_hasoc.pkl", mode = ["c
 
 	feature_vector_dict = FeatureVectorDictionary(id_tweet_map, index_fpath, mode)
 
+	tweet_feature_vector = []
+	tweet_class = []
+	# for key, val in feature_vector_dict.items():
+	# 	if not tweet_feature_vector:
+	# 		tweet_feature_vector = np.unsqueeze(np.asarray(feature_vector_dict[key]), axis=0)
+	# 	else:
+	# 		tweet_feature_vector = np.append(tweet_feature_vector, feature_vector_dict[key], axis=0)
 	for key in tqdm(sorted(list(feature_vector_dict.keys()))):
 		tweet_feature_vector.append(feature_vector_dict[key])
 

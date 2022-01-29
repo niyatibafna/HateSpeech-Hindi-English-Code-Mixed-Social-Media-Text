@@ -27,8 +27,8 @@ from data_reader import *
 
 PATH_TO_CRAWLED_DATA = "../political_health/data/crawled"
 INDEX_PATH = "indexes/indexes_cm_cgrams234.pkl"
-MODEL_PATH = "models/svm_cm_cgrams234.pkl"
-KBEST_PATH = "models/selectkbest_cm_cgrams234.pkl"
+MODEL_PATH = "models/svm_cm_cgrams234_hwords.pkl"
+KBEST_PATH = "models/selectkbest_cm_cgrams234_hwords.pkl"
 
 print("Loading SelectKBest Object")
 with open(KBEST_PATH, "rb") as skbf:
@@ -50,12 +50,14 @@ svm_fv_cgrams = pickle.load(open(MODEL_PATH, "rb"))
 # id_tweet_map = {key:val for key,val in id_tweet_map.items() if key==221}
 # print(id_tweet_map)
 
-id_tweet_map = {0:"Kia ho ager teray rukhsaar ko hum choomtay hein; Jo musalmaan hein wo Quraan ko sanam choomtay hein! (Bahadur Shah Zafar)"}
+id_tweet_map = {0:"#1 Dont u think adage does not hold as the perpetrator is a arab musalmaan, not pakthun?"}
 tweets_list = [id_tweet_map[key] for key in sorted(list(id_tweet_map.keys()))]
 
 
-X = TestData(id_tweet_map, index_fpath = INDEX_PATH, mode = ["cgrams"])
+X = TestData(id_tweet_map, index_fpath = INDEX_PATH, mode = ["cgrams", "hatewords"])
 # Convert list into a array
+print("Number of features: ", len(X[0]))
+
 X = numpy.asarray(X)
 X = selectkbest_obj.transform(X)
 
