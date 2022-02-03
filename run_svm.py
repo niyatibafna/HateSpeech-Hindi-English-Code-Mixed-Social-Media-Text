@@ -9,6 +9,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
 #from sklearn.model_selection import cross_validate
 from sklearn import metrics
+from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
@@ -24,24 +25,48 @@ import sys
 sys.path.append("../political_health/")
 from hasoc_reader import *
 
+
+
+
+#sel 1 : casteism, religious controversies, indian politics (from cm)
+#sel 2 : casteism, religious controversies, indian politics (from cm) - 6000 negative examples from EN, HI Hasoc
+#sel 3:  casteism, religious controversies, indian politics (from cm) - negative examples from cm (as many as possible). Total 8500
+#sel 4: casteism, religious controversies, indian politics (from cm) - negative examples from cm (as many as possible) + from HS data (only negative). Total 11500
 PATH_TO_HASOC_DATA = "../political_health/data/hasoc"
-INDEX_PATH = "indexes/indexes_cm_cgrams234.pkl"
+INDEX_PATH = "indexes/indexes_cmsel_cgrams234.pkl"
 FV_FILE = "fv_cm_wgrams_hwords.json"
-MODEL_PATH = "models/svm_cm_wgrams_hwords.pkl"
-KBEST_PATH = "models/selectkbest_cm_wgrams_hwords.pkl"
+MODEL_PATH = "models/svm_cmsel_wgrams_hwords.pkl"
+KBEST_PATH = "models/selectkbest_cmsel_wgrams_hwords.pkl"
 MODE = ["wgrams", "hatewords"]
 
-# Get data, HASOC data
-id_tweet_map = create_id_tweet_map()
-id_class_map = create_id_class_map()
+# GET HS DATA
+
+all_id_tweet_map = create_id_tweet_map()
+all_id_class_map = create_id_class_map()
+id_tweet_map = dict()
+id_class_map = dict()
+print("Size of loaded HS data: ", len(all_id_tweet_map))
+print("Retaining only negative examples: ")
+for id, tweet in all_id_tweet_map.items():
+	if all_id_class_map[id] == 0:
+		id_tweet_map[id] = tweet
+		id_class_map[id] = all_id_class_map[id]
+
+for id, label in id_class_map.items():
+	assert label == 0
+	assert id in id_tweet_map
+assert len(id_class_map) == len(id_tweet_map)
 
 print("Length of training data: ", len(id_tweet_map))
 
+# GET HASOC DATA
 hasoc = HasocReader(PATH_TO_HASOC_DATA)
 id_tweet_map, id_class_map = hasoc.reader(id_tweet_map, id_class_map)
 
 print("Length of all training data (including HASOC): ", len(id_tweet_map))
 assert len(id_tweet_map) == len(id_class_map)
+
+print("Length of positive examples: {}".format(len([val for val in id_class_map.values() if val == 1])))
 
 # Prepare feature vectors
 X, Y = TrainingData(id_tweet_map, id_class_map, index_fpath = INDEX_PATH, mode = MODE, req_feature_vector_file = FV_FILE)
@@ -82,8 +107,12 @@ for train_idx, test_idx in kf.split(X):
 		clf = svm.SVC(kernel = 'rbf', C=10)
 		clf.fit(X_train, Y_train.ravel())
 		predictions = clf.predict(X_test)
+		prec_score = precision_score(Y_test, predictions)
+		rec_score = recall_score(Y_test, predictions)
 		score = accuracy_score(Y_test, predictions)
 		accuracy = accuracy + score
+		print("Precision: ", prec_score)
+		print("Recal: ", rec_score)
 		print("Score for fold %d: %.3f" %(fold, score))
 
 

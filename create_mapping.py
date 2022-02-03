@@ -18,7 +18,10 @@ with open('../political_health/data/train/hate_speech.tsv') as dataset:
 		class_name = []
 		text = line[0]
 		if len(line[1]) > 0:
-			class_name.append(line[1])
+			class_name = line[1].strip().lower()
+			if class_name in ["n", "on"]:
+				class_name = "no"
+			assert class_name in ["yes", "no"]
 
 		id_to_tweet_map[text_id] = text
 		tweet_to_id_map[text] = text_id
