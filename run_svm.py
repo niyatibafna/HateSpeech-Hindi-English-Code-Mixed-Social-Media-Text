@@ -32,6 +32,7 @@ from hasoc_reader import *
 #sel 2 : casteism, religious controversies, indian politics (from cm) - 6000 negative examples from EN, HI Hasoc
 #sel 3:  casteism, religious controversies, indian politics (from cm) - negative examples from cm (as many as possible). Total 8500
 #sel 4: casteism, religious controversies, indian politics (from cm) - negative examples from cm (as many as possible) + from HS data (only negative). Total 11500
+#sel 5 : casteism, religious controversies (from cm) - negative examples from HS and HASOC - 10000 total
 PATH_TO_HASOC_DATA = "../political_health/data/hasoc"
 INDEX_PATH = "indexes/indexes_cmsel_cgrams234.pkl"
 FV_FILE = "fv_cm_wgrams_hwords.json"
