@@ -1,3 +1,4 @@
+#!usr/bin/env python3
 from __future__ import division
 import os
 import numpy
@@ -18,103 +19,95 @@ from sklearn.feature_selection import chi2
 from sklearn.feature_selection import RFE
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import LabelEncoder, MultiLabelBinarizer
-
 from build_feature_vector import *
-from format_data import *
 import sys
 sys.path.append("../political_health/")
-from hasoc_reader import *
+from data_reader import *
 
 
+def load_models(KBEST_PATH, MODEL_PATH):
+	# Load selectkbest_obj model
+	print("Loading SelectKBest Object")
+	with open(KBEST_PATH, "rb") as skbf:
+		selectkbest_obj = pickle.load(skbf)
+
+	# Load SVM model
+	print("Loading SVM Model")
+	svm_fv_cgrams = pickle.load(open(MODEL_PATH, "rb"))
+
+	return selectkbest_obj, svm_fv_cgrams
 
 
-#sel 1 : casteism, religious controversies, indian politics (from cm)
-#sel 2 : casteism, religious controversies, indian politics (from cm) - 6000 negative examples from EN, HI Hasoc
-#sel 3:  casteism, religious controversies, indian politics (from cm) - negative examples from cm (as many as possible). Total 8500
-#sel 4: casteism, religious controversies, indian politics (from cm) - negative examples from cm (as many as possible) + from HS data (only negative). Total 11500
-#sel 5 : casteism, religious controversies (from cm) - negative examples from HS and HASOC - 10000 total
-PATH_TO_HASOC_DATA = "../political_health/data/hasoc"
-INDEX_PATH = "indexes/indexes_cmsel_cgrams234.pkl"
-FV_FILE = "fv_cm_wgrams_hwords.json"
-MODEL_PATH = "models/svm_cmsel_wgrams_hwords.pkl"
-KBEST_PATH = "models/selectkbest_cmsel_wgrams_hwords.pkl"
-MODE = ["wgrams", "hatewords"]
+def get_data(PATH_TO_CRAWLED_DATA, years, keywords, labels_exist=False, PATH_TO_HASOC_DATA=None):
+	tweet_reader = TweetReader(PATH_TO_CRAWLED_DATA)
+	id_tweet_map = tweet_reader.reader(years, keywords)
 
-# GET HS DATA
+	# id_tweet_map = {key:val for key,val in id_tweet_map.items() if key<5000}
+	# id_class_map = {key:val for key,val in id_class_map.items() if key<102}
 
-all_id_tweet_map = create_id_tweet_map()
-all_id_class_map = create_id_class_map()
-id_tweet_map = dict()
-id_class_map = dict()
-print("Size of loaded HS data: ", len(all_id_tweet_map))
-print("Retaining only negative examples: ")
-for id, tweet in all_id_tweet_map.items():
-	if all_id_class_map[id] == 0:
-		id_tweet_map[id] = tweet
-		id_class_map[id] = all_id_class_map[id]
+	# id_tweet_map = {0:"I want to drink water"}
 
-for id, label in id_class_map.items():
-	assert label == 0
-	assert id in id_tweet_map
-assert len(id_class_map) == len(id_tweet_map)
+	tweets_list = [id_tweet_map[key] for key in sorted(list(id_tweet_map.keys()))]
+	class_list = None
+	if labels_exist:
+		hasoc = HasocReader(PATH_TO_HASOC_DATA)
+		id_tweet_map, id_class_map = hasoc.reader(dict(), dict())
+		class_list = [id_class_map[key] for key in sorted(list(id_class_map.keys()))]
 
-print("Length of training data: ", len(id_tweet_map))
 
-# GET HASOC DATA
-hasoc = HasocReader(PATH_TO_HASOC_DATA)
-id_tweet_map, id_class_map = hasoc.reader(id_tweet_map, id_class_map)
-
-print("Length of all training data (including HASOC): ", len(id_tweet_map))
-assert len(id_tweet_map) == len(id_class_map)
-
-print("Length of positive examples: {}".format(len([val for val in id_class_map.values() if val == 1])))
+	return id_tweet_map, tweets_list, class_list
 
 # Prepare feature vectors
-X, Y = TrainingData(id_tweet_map, id_class_map, index_fpath = INDEX_PATH, mode = MODE, req_feature_vector_file = FV_FILE)
+def run_svm_on_data(selectkbest_obj, svm_fv_cgrams, id_tweet_map, INDEX_PATH, MODE, labels_exist = False, class_list = None):
 
-# Convert list into a array
-print("Features shape: ", len(X[0]))
-X = numpy.asarray(X)
-Y = numpy.asarray(Y)
+	X = TestData(id_tweet_map, index_fpath = INDEX_PATH, mode = MODE)
+	# Convert list into a array
+	print("Number of features: ", len(X[0]))
 
-# Data transformation
-print("Selecting K best:")
-selectkbest_obj = SelectKBest(chi2, k=1200).fit(X,Y)
-# with open(KBEST_PATH, "rb") as skbf:
-# 	selectkbest_obj = pickle.load(skbf)
+	X = numpy.asarray(X)
+	X = selectkbest_obj.transform(X)
 
-X = selectkbest_obj.transform(X)
-
-print("Saving K best model")
-with open(KBEST_PATH, "wb") as skbf:
-	pickle.dump(selectkbest_obj, skbf)
-
-print("Running SVM")
-clf = svm.SVC(kernel = 'rbf', C=10)
-clf.fit(X, Y.ravel())
-with open(MODEL_PATH, "wb") as m_file:
-	pickle.dump(clf, m_file)
-
-
-# Training with KFold accuracy
-kf = KFold(n_splits=10)
-
-fold = 0
-accuracy = 0
-for train_idx, test_idx in kf.split(X):
-		fold = fold + 1
-		X_train, X_test = X[train_idx], X[test_idx]
-		Y_train, Y_test = Y[train_idx], Y[test_idx]
-		clf = svm.SVC(kernel = 'rbf', C=10)
-		clf.fit(X_train, Y_train.ravel())
-		predictions = clf.predict(X_test)
-		prec_score = precision_score(Y_test, predictions)
-		rec_score = recall_score(Y_test, predictions)
-		score = accuracy_score(Y_test, predictions)
-		accuracy = accuracy + score
+	print("Running SVM Model")
+	predictions = svm_fv_cgrams.predict(X)
+	# print(predictions)
+	if labels_exist:
+		prec_score = precision_score(class_list, predictions)
+		rec_score = recall_score(class_list, predictions)
 		print("Precision: ", prec_score)
 		print("Recal: ", rec_score)
-		print("Score for fold %d: %.3f" %(fold, score))
+		print("Accuracy : " , accuracy_score(class_list, predictions))
+
+	return predictions
+
+def get_results(predictions, tweets_list, outpath_hate):
+
+	with open(outpath_hate, "w") as oh:
+		for idx, elem in enumerate(predictions):
+			if elem == 1:
+				oh.write(tweets_list[idx]+"\n")
+				oh.write("EOT\n")
+
+	hate_tweets = len([x for x in predictions if x == 1])
+	return len(predictions), hate_tweets/len(predictions)
+	# with open(outpath_overview, "a") as oo:
+		# oo.write(keyword+"\t"+str(len(predictions))+str(hate_tweets)+str(float(hate_tweets/len(predictions))))
+	# print("Number of tweets labelled as hate speech: {} ".format(hate_tweets))
+	# print("Percentage: {}".format(hate_tweets/len(predictions)))
+
+def run_svm_all(outpath_hate, years = None, keywords = None, use_hasoc = False):
+
+	PATH_TO_CRAWLED_DATA = "../political_health/data/crawled"
+	INDEX_PATH = "indexes/indexes_cmsel_cgrams234.pkl"
+	MODEL_PATH = "models/svm_cmsel_wgrams_hwords.pkl"
+	KBEST_PATH = "models/selectkbest_cmsel_wgrams_hwords.pkl"
+	MODE = ["wgrams", "hatewords"]
+	PATH_TO_HASOC_DATA = "../political_health/data/hasoc"
 
 
-print( "Accuracy : " , round(accuracy/10, 3))
+	selectkbest_obj, svm_fv_cgrams = load_models(KBEST_PATH, MODEL_PATH)
+	id_tweet_map, tweets_list, class_list = get_data(PATH_TO_CRAWLED_DATA, years, keywords, use_hasoc, PATH_TO_HASOC_DATA)
+	print("Length of data: ", len(id_tweet_map))
+	predictions = run_svm_on_data(selectkbest_obj, svm_fv_cgrams, id_tweet_map, INDEX_PATH, MODE, use_hasoc, class_list)
+	total, hate_percent = get_results(predictions, tweets_list, outpath_hate)
+
+	return total, hate_percent
