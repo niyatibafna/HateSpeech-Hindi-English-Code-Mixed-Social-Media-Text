@@ -87,8 +87,10 @@ def get_results(predictions, tweets_list, outpath_hate):
 				oh.write(tweets_list[idx]+"\n")
 				oh.write("EOT\n")
 
-	hate_tweets = len([x for x in predictions if x == 1])
-	return len(predictions), hate_tweets/len(predictions)
+		oh.close()
+
+	num_hate_tweets = len([x for x in predictions if x == 1])
+	return len(predictions), num_hate_tweets
 	# with open(outpath_overview, "a") as oo:
 		# oo.write(keyword+"\t"+str(len(predictions))+str(hate_tweets)+str(float(hate_tweets/len(predictions))))
 	# print("Number of tweets labelled as hate speech: {} ".format(hate_tweets))
@@ -107,7 +109,10 @@ def run_svm_all(outpath_hate, years = None, keywords = None, use_hasoc = False):
 	selectkbest_obj, svm_fv_cgrams = load_models(KBEST_PATH, MODEL_PATH)
 	id_tweet_map, tweets_list, class_list = get_data(PATH_TO_CRAWLED_DATA, years, keywords, use_hasoc, PATH_TO_HASOC_DATA)
 	print("Length of data: ", len(id_tweet_map))
-	predictions = run_svm_on_data(selectkbest_obj, svm_fv_cgrams, id_tweet_map, INDEX_PATH, MODE, use_hasoc, class_list)
-	total, hate_percent = get_results(predictions, tweets_list, outpath_hate)
+	if len(id_tweet_map):
+		predictions = run_svm_on_data(selectkbest_obj, svm_fv_cgrams, id_tweet_map, INDEX_PATH, MODE, use_hasoc, class_list)
+		total, num_hate_tweets = get_results(predictions, tweets_list, outpath_hate)
 
-	return total, hate_percent
+		return total, num_hate_tweets
+
+	return None, None
